@@ -3,8 +3,6 @@
   "version": "0.0.2",
   "description": "a build command that transform js/jsx/images/scss with babel/postcss",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development BUILD_ENV=dev WATCH_ENV=watch gulp start",
-    "build-esm": "cross-env NODE_ENV=production BUILD_ENV=production gulp build"
   },
   "bin": {
     "build-esm": "./bin/build-esm.js"
