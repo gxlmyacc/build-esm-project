@@ -3,7 +3,7 @@ const spawn = require('cross-spawn');
 module.exports = function execCommand(name) {
   const result = spawn.sync(
     'node',
-    [].concat(require.resolve('../scripts/' + name)),
+    [].concat(require.resolve('./scripts/' + name)),
     { stdio: 'inherit' }
   );
   if (result.signal) {

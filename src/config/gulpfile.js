@@ -1,6 +1,7 @@
 const { task, src, dest, series, watch, lastRun } = require('gulp');
 const babel = require('gulp-babel');
 const postcss = require('gulp-postcss');
+const less = require('gulp-less');
 const sass = require('gulp-sass')(require('sass'));
 const del = require('del');
 const sourcemaps = require('gulp-sourcemaps');
@@ -13,7 +14,8 @@ const rootDir = options.root
   : process.cwd();
 const srcDir = options.src ? options.src : './src';
 const distDir = options.out ? options.out : './esm';
-const jsMask = `${srcDir}/**/*.{js,jsx}`;
+const jsMask = `${srcDir}/**/*.{js,jsx${options.typescript ? 'ts,tsx' : ''}}`;
+const lessMask = `${srcDir}/**/*.less`;
 const scssMask = `${srcDir}/**/*.scss`;
 const otherMask = `${srcDir}/**/*.{css,png,jpg,gif,ico,json,svg}`;
 const ignore = options.ignore
@@ -63,19 +65,59 @@ function buildJs(done, file) {
     .on('end', done);
 }
 
-function buildScss(done, file) {
-  let config = fs.existsSync(postcssConfigFile) ? require(postcssConfigFile) : {};
-  if (typeof config === 'function') config = config();
-  const plugins = Object.keys(config.plugins || {}).map(key => require(key)(config.plugins[key]));
+let postcssPlugins;
+function getPostcssPlugins() {
+  if (postcssPlugins) return postcssPlugins;
 
+  let postcssConfig = fs.existsSync(postcssConfigFile) ? require(postcssConfigFile) : {};
+  if (typeof postcssConfig === 'function') postcssConfig = postcssConfig();
+
+  postcssPlugins = Object.keys(postcssConfig.plugins || {}).map(key => require(key)(postcssConfig.plugins[key]));
+
+  if (buildConfig.buildPostcss) {
+    const isContinue = buildConfig.buildPostcss(postcssPlugins);
+    if (isContinue === false) return;
+  }
+
+  return postcssPlugins;
+}
+
+function buildLess(done, file) {
+  const postcssPlugins = getPostcssPlugins();
+  if (!postcssPlugins) {
+    done();
+    return;
+  }
+
+  let lessConfig = {};
+  if (buildConfig.buildLess) {
+    const isContinue = buildConfig.buildLess(lessConfig, done, file);
+    if (isContinue === false) return;
+  }
+
+  src(file || lessMask, { cwd: rootDir, since: lastRun(buildLess), ignore })
+    .pipe(less())
+    .pipe(postcss(postcssPlugins))
+    .pipe(dest(distDir, { cwd: rootDir }))
+    .on('end', done);
+}
+
+function buildScss(done, file) {
+  const postcssPlugins = getPostcssPlugins();
+  if (!postcssPlugins) {
+    done();
+    return;
+  }
+
+  let scssConfig = {};
   if (buildConfig.buildScss) {
-    const isContinue = buildConfig.buildScss(plugins, done, file);
+    const isContinue = buildConfig.buildScss(scssConfig, done, file);
     if (isContinue === false) return;
   }
 
   src(file || scssMask, { cwd: rootDir, since: lastRun(buildScss), ignore })
-    .pipe(sass().on('error', sass.logError))
-    .pipe(postcss(plugins))
+    .pipe(sass(scssConfig).on('error', sass.logError))
+    .pipe(postcss(postcssPlugins))
     .pipe(dest(distDir, { cwd: rootDir }))
     .on('end', done);
 }
@@ -90,7 +132,7 @@ function buildOthers(done, file) {
     .on('end', done);
 }
 
-const build = series(buildJs, buildScss, buildOthers);
+const build = series(buildJs, buildScss, buildLess, buildOthers);
 task('build', series(cleanEsm, build));
 
 task('start', series(build, done => {
@@ -114,6 +156,18 @@ task('start', series(build, done => {
     cb();
   }, buildJs, cb => {
     console.log('build js end.');
+    cb();
+  }));
+
+  watch([lessMask], {
+    events: ['add', 'change'],
+    cwd: rootDir,
+    ignore,
+  }, series(cb => {
+    console.log('build less start...');
+    cb();
+  }, buildLess, cb => {
+    console.log('build less end.');
     cb();
   }));
 

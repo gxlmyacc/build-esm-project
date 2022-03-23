@@ -3,7 +3,7 @@
 const program = require('commander');
 const updateNotifier = require('update-notifier');
 
-const execCommand = require('../utils/execCommand');
+const execCommand = require('../src/index');
 
 const pkg = require('../package.json');
 
@@ -34,6 +34,7 @@ Object.keys(commandListMap).forEach(commandName => {
     .option('--ignore <path>', 'provide igonre transfrom files')
     .option('--src <path>', 'source directory, default is src')
     .option('--out <path>', 'output directory, default is esm')
+    .option('-ts, --typescript, ', 'is typescript project')
     .description(commandListMap[commandName])
     .action(options => {
       process.env.options = JSON.stringify(options);
