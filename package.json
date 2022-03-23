@@ -1,6 +1,6 @@
 {
   "name": "build-esm-project",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "a build command that transform js/jsx/images/scss with babel/postcss",
   "scripts": {
     "dev": "cross-env NODE_ENV=development BUILD_ENV=dev WATCH_ENV=watch gulp start",
@@ -22,7 +22,6 @@
     "utils"
   ],
   "dependencies": {
-    "camelcase": "^6.3.0",
     "commander": "^8.3.0",
     "del": "^5.1.0",
     "gulp": "^4.0.2",

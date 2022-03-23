@@ -7,32 +7,54 @@ const sourcemaps = require('gulp-sourcemaps');
 const path = require('path');
 const fs = require('fs');
 
-const rootDir = process.env.options.root
-  ? path.resolve(process.cwd(), process.env.options.root)
+const options = JSON.parse(process.env.options || {});
+const rootDir = options.root
+  ? path.resolve(process.cwd(), options.root)
   : process.cwd();
-const srcDir = process.env.options.src
-  ? path.resolve(process.cwd(), process.env.options.src)
-  : path.resolve(process.cwd(), './src');
-const distDir = process.env.options.out
-  ? path.resolve(process.cwd(), process.env.options.out)
-  : path.resolve(process.cwd(), './esm');
+const srcDir = options.src ? options.src : './src';
+const distDir = options.out ? options.out : './esm';
 const jsMask = `${srcDir}/**/*.{js,jsx}`;
 const scssMask = `${srcDir}/**/*.scss`;
 const otherMask = `${srcDir}/**/*.{css,png,jpg,gif,ico,json,svg}`;
-const ignore = process.env.options.ignore
-  ? process.env.options.ignore.split(',').filter(Boolean)
+const ignore = options.ignore
+  ? options.ignore.split(',').filter(Boolean)
   : [];
+const babelConfigFile = options.babelConfig
+  ? path.resolve(rootDir, options.babelConfig)
+  : path.resolve(rootDir, './babel.config.js');
+const postcssConfigFile = options.postcssConfig
+  ? path.resolve(rootDir, options.postcssConfig)
+  : path.resolve(rootDir, './postcss.config.js');
+const buildConfigFile = options.buildConfig
+  ? path.resolve(rootDir, options.buildConfig)
+  : path.resolve(rootDir, './build-esm.config.js');
+
+let buildConfig = fs.existsSync(buildConfigFile)
+  ? require(buildConfigFile)
+  : {};
+if (typeof buildConfig === 'function') buildConfig = buildConfig(options);
 
 function cleanEsm() {
+  if (buildConfig.cleanEsm) {
+    const isContinue = buildConfig.cleanEsm();
+    if (isContinue  === false) return;
+  }
   return del([
     `${distDir}/**/*`
   ], { cwd: rootDir });
 }
 
 function buildJs(done, file) {
-  const filename = path.resolve(rootDir, './babel.config.js');
-  let config = fs.existsSync(filename) ? require(filename) : {};
+  let config = fs.existsSync(babelConfigFile) ? require(babelConfigFile) : {};
   if (typeof config === 'function') config = config();
+  if (!config.presets) config.presets = [];
+  if (!config.plugins) config.plugins = [];
+
+  if (buildConfig.buildJs) {
+    const isContinue = buildConfig.buildJs(config, done, file);
+    if (isContinue === false) return;
+  }
+
   src(file || jsMask, { cwd: rootDir, since: lastRun(buildJs), ignore })
     .pipe(sourcemaps.init())
     .pipe(babel(config))
@@ -42,10 +64,15 @@ function buildJs(done, file) {
 }
 
 function buildScss(done, file) {
-  const filename = path.resolve(rootDir, './postcss.config.js');
-  let config = fs.existsSync(filename) ? require(filename) : {};
+  let config = fs.existsSync(postcssConfigFile) ? require(postcssConfigFile) : {};
   if (typeof config === 'function') config = config();
   const plugins = Object.keys(config.plugins || {}).map(key => require(key)(config.plugins[key]));
+
+  if (buildConfig.buildScss) {
+    const isContinue = buildConfig.buildScss(plugins, done, file);
+    if (isContinue === false) return;
+  }
+
   src(file || scssMask, { cwd: rootDir, since: lastRun(buildScss), ignore })
     .pipe(sass().on('error', sass.logError))
     .pipe(postcss(plugins))
@@ -54,6 +81,10 @@ function buildScss(done, file) {
 }
 
 function buildOthers(done, file) {
+  if (buildConfig.buildOthers) {
+    const isContinue = buildConfig.buildOthers(done, file);
+    if (isContinue === false) return;
+  }
   src(file || otherMask, { cwd: rootDir, since: lastRun(buildOthers), ignore })
     .pipe(dest(distDir), { cwd: rootDir })
     .on('end', done);
@@ -119,13 +150,13 @@ task('start', series(build, done => {
     file = `./${file.replace(/\\/g, '/')}`.replace(srcDir, distDir);
     if (path.extname(file) === '.scss') file = file.replace(/\.scss$/, '.css');
     del([file], { force: true });
-    if (path.extname(file) === '.js') del([`${file}.map`], { force: true });
+    if (path.extname(file) === '.js') del([`${file}.map`], { force: true, cwd: rootDir });
     console.log(`File ${file} was removed`);
   });
   watcher.on('unlinkDir', file => {
     file = path.relative(rootDir, file);
     file = `./${file.replace(/\\/g, '/')}`.replace(srcDir, distDir);
-    del([file], { force: true });
+    del([file], { force: true, cwd: rootDir });
     console.log(`Dir ${file} was removed`);
   });
 
