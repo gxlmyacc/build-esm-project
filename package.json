@@ -1,0 +1,60 @@
+{
+  "name": "build-esm-project",
+  "version": "0.0.1",
+  "description": "a build command that transform js/jsx/images/scss with babel/postcss",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development BUILD_ENV=dev WATCH_ENV=watch gulp start",
+    "build-esm": "cross-env NODE_ENV=production BUILD_ENV=production gulp build"
+  },
+  "bin": {
+    "build-esm": "./bin/build-esm.js"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gxlmyacc/build-esm-project.git"
+  },
+  "files": [
+    "bin",
+    "config",
+    "scripts",
+    "utils"
+  ],
+  "dependencies": {
+    "camelcase": "^6.3.0",
+    "commander": "^8.3.0",
+    "del": "^5.1.0",
+    "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
+    "gulp-postcss": "^9.0.1",
+    "gulp-sass": "^5.1.0",
+    "gulp-sourcemaps": "^3.0.0",
+    "sass": "^1.49.9",
+    "update-notifier": "^5.1.0"
+  },
+  "peerDependencies": {
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
+    "@babel/plugin-proposal-decorators": "^7.16.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.16.0",
+    "@babel/preset-env": "^7.16.4",
+    "autoprefixer": "^9.4.7",
+    "babel-eslint": "^10.1.0",
+    "babel-plugin-import": "^1.12.2",
+    "babel-plugin-transform-modules": "^0.1.1",
+    "cross-env": "^6.0.3",
+    "del": "^5.1.0",
+    "eslint": "^7.1.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-react-app": "^5.0.2",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-react": "^7.20.0",
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "postcss-discard-duplicates": "^5.0.1",
+    "source-map": "^0.7.3"
+  }
+}
