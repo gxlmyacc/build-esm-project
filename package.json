@@ -1,6 +1,6 @@
 {
   "name": "build-esm-project",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "a build command that transform js/jsx/images/scss with babel/postcss",
   "scripts": {
   },
