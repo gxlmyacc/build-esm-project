@@ -92,7 +92,7 @@ function buildJs(done, file) {
     .on('end', () => {
       console.log(chalk.cyan(commandPrefx) + ' build js end.');
 
-      done && done.apply(arguments);
+      done && done.apply(null, arguments);
     });
 }
 
@@ -136,7 +136,7 @@ function buildLess(done, file) {
     .on('end', () => {
       console.log(chalk.cyan(commandPrefx) + ' build less end.');
 
-      done && done.apply(arguments);
+      done && done.apply(null, arguments);
     });
 }
 
@@ -162,7 +162,7 @@ function buildScss(done, file) {
     .on('end', () => {
       console.log(chalk.cyan(commandPrefx) + ' build scss end.');
 
-      done && done.apply(arguments);
+      done && done.apply(null, arguments);
     });
 }
 
@@ -180,7 +180,7 @@ function buildOthers(done, file) {
     .on('end', () => {
       console.log(chalk.cyan(commandPrefx) + ' build others end.');
 
-      done && done.apply(arguments);
+      done && done.apply(null, arguments);
     });
 }
 

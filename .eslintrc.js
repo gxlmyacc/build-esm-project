@@ -161,5 +161,6 @@ module.exports = {
     'wrap-iife': [2, 'inside'],
 
     'import/extensions': 0,
+    'prefer-spread': 0,
   }
 };
