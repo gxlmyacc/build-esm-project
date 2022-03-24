@@ -29,7 +29,7 @@ function start(execCommand, options = {}) {
     const command = program
       .command(commandName)
       .option('--root <path>', 'provide project root directory, default process.cwd()')
-      .option('--build-config <path>', 'provide build esm config file path, default is process.cwd()/build-esm.config.js')
+      .option('--esm-config <path>', 'provide build esm config file path, default is process.cwd()/esm-project.config.js')
       .option('--babel-config <path>', 'provide babel config file path, default is process.cwd()/babel.config.js')
       .option('--postcss-config <path>', 'provide postcss config file path, default is process.cwd()/postcss.config.js')
       .option('--ignore <path>', 'provide igonre transfrom files')

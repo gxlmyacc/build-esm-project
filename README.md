@@ -1,25 +1,24 @@
-# build-esm-project
+# esm-project-project
 
 a build command that will transform js/jsx/images/scss/less with gulp-babel/postcss/scss/less plugin.
 
 ## Installtion
 
 ```bash
-  npm install --save-dev build-esm-project
+  npm install --save-dev esm-project-project
   // or 
-  yarn add -D build-esm-project
+  yarn add -D esm-project-project
 ```
 
 ## Usage
 
 support "build"、"start" command
 
-
 "build" command:
 ```bash
 ## "build" command options:
 ##   --root <path>            provide project root directory, default process.cwd()
-##   --build-config <path>    provide build esm config file path, default is process.cwd()/build-esm.config.js
+##   --build-config <path>    provide build esm config file path, default is process.cwd()/esm-project.config.js
 ##   --babel-config <path>    provide babel config file path, default is process.cwd()/babel.config.js
 ##   --postcss-config <path>  provide postcss config file path, default is process.cwd()/postcss.config.js
 ##   --ignore <path>          provide igonre transfrom files
@@ -27,13 +26,13 @@ support "build"、"start" command
 ##   --out <path>             output directory, default is esm
 ##    -ts, --typescript,      is typescript project
 
-build-esm build
+esm-project build
 ```
 "start" command:
 ```bash
 ## "start" command options:
 ##   --root <path>            provide project root directory, default process.cwd()
-##   --build-config <path>    provide build esm config file path, default is process.cwd()/build-esm.config.js
+##   --build-config <path>    provide build esm config file path, default is process.cwd()/esm-project.config.js
 ##   --babel-config <path>    provide babel config file path, default is process.cwd()/babel.config.js
 ##   --postcss-config <path>  provide postcss config file path, default is process.cwd()/postcss.config.js
 ##   --ignore <path>          provide igonre transfrom files
@@ -41,12 +40,12 @@ build-esm build
 ##   --out <path>             output directory, default is esm
 ##    -ts, --typescript,      is typescript project
 
-build-esm start
+esm-project start
 ```
 
-you also can config the `build-esm.config.js` to custom do something:
+you also can config the `esm-project.config.js` to custom do something:
 ```js
-// build-esm.config.js: 
+// esm-project.config.js: 
 module.exports = {
   cleanEsm() {
     // return false will skip

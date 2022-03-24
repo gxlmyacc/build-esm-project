@@ -35,15 +35,15 @@ function execCommand(name, options = {}) {
  *   buildScss?: (scssConfig: Record<string, any>, done: (result) => void, file: any) => void|false,
  *   buildPostcss?: (postcssPlugins: Record<string, function>) => void|false,
  *   buildOthers?: (othersConfig: Record<string, any>, done: (result) => void, file: any) => void|false
- * }} BuildConfig
+ * }} EsmConfig
  */
 
 /**
- * @typedef {(...buildConfigs: BuildConfig[]) => { [key: string]: function[] } } MergeBuildConfig
+ * @typedef {(...buildConfigs: EsmConfig[]) => { [key: string]: function[] } } MergeEsmConfig
  */
 
-/** @type {MergeBuildConfig} */
-const mergeBuildConfig = function (...buildConfigs) {
+/** @type {MergeEsmConfig} */
+const mergeEsmConfig = function (...buildConfigs) {
   const result = {};
   if (!buildConfigs.length) return result;
 
@@ -65,5 +65,5 @@ const mergeBuildConfig = function (...buildConfigs) {
 
 module.exports = {
   execCommand,
-  mergeBuildConfig
+  mergeEsmConfig
 };

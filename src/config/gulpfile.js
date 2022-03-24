@@ -8,7 +8,7 @@ const del = require('del');
 const sourcemaps = require('gulp-sourcemaps');
 const path = require('path');
 const fs = require('fs');
-const mergeBuildConfig = require('../index').mergeBuildConfig;
+const mergeEsmConfig = require('../index').mergeEsmConfig;
 
 const options = JSON.parse(process.env.options || {});
 const rootDir = options.root
@@ -29,27 +29,27 @@ const babelConfigFile = options.babelConfig
 const postcssConfigFile = options.postcssConfig
   ? path.resolve(rootDir, options.postcssConfig)
   : path.resolve(rootDir, './postcss.config.js');
-const buildConfigFile = options.buildConfig
-  ? path.resolve(rootDir, options.buildConfig)
-  : path.resolve(rootDir, './build-esm.config.js');
+const esmConfigFile = options.esmConfig
+  ? path.resolve(rootDir, options.esmConfig)
+  : path.resolve(rootDir, './esm-project.config.js');
 const commandPrefx = options.commandPrefx || '[build-esm-project]';
 
 
-let globalBuildConfig;
-function runBuildConfig(hookName, args = []) {
-  if (!globalBuildConfig) {
-    let buildConfig = fs.existsSync(buildConfigFile)
-      ? require(buildConfigFile)
+let globalEsmConfig;
+function runEsmConfigHook(hookName, args = []) {
+  if (!globalEsmConfig) {
+    let esmConfig = fs.existsSync(esmConfigFile)
+      ? require(esmConfigFile)
       : {};
-    if (typeof buildConfig === 'function') buildConfig = buildConfig(options);
-    globalBuildConfig = mergeBuildConfig(buildConfig);
+    if (typeof esmConfig === 'function') esmConfig = esmConfig(options);
+    globalEsmConfig = mergeEsmConfig(esmConfig);
   }
 
   let isContinue = true;
-  if (!globalBuildConfig[hookName]) return isContinue;
+  if (!globalEsmConfig[hookName]) return isContinue;
 
-  globalBuildConfig[hookName].some(fn => {
-    isContinue = fn.apply(globalBuildConfig[hookName], args) !== false;
+  globalEsmConfig[hookName].some(fn => {
+    isContinue = fn.apply(globalEsmConfig[hookName], args) !== false;
     return !isContinue;
   });
 
@@ -59,7 +59,7 @@ function runBuildConfig(hookName, args = []) {
 function cleanEsm() {
   console.log(chalk.cyan(commandPrefx) + ' clean esm...');
 
-  const isContinue = runBuildConfig('cleanEsm');
+  const isContinue = runEsmConfigHook('cleanEsm');
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' clean paused.');
     return;
@@ -78,7 +78,7 @@ function buildJs(done, file) {
   if (!config.presets) config.presets = [];
   if (!config.plugins) config.plugins = [];
 
-  const isContinue = runBuildConfig('buildJs', [config, done, file]);
+  const isContinue = runEsmConfigHook('buildJs', [config, done, file]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -105,7 +105,7 @@ function getPostcssPlugins() {
 
   postcssPlugins = Object.keys(postcssConfig.plugins || {}).map(key => require(key)(postcssConfig.plugins[key]));
 
-  const isContinue = runBuildConfig('buildPostcss', [postcssPlugins]);
+  const isContinue = runEsmConfigHook('buildPostcss', [postcssPlugins]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -123,7 +123,7 @@ function buildLess(done, file) {
   }
 
   let lessConfig = {};
-  const isContinue = runBuildConfig('buildLess', [lessConfig, done, file]);
+  const isContinue = runEsmConfigHook('buildLess', [lessConfig, done, file]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -149,7 +149,7 @@ function buildScss(done, file) {
   }
 
   let scssConfig = {};
-  const isContinue = runBuildConfig('buildScss', [scssConfig, done, file]);
+  const isContinue = runEsmConfigHook('buildScss', [scssConfig, done, file]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -169,7 +169,7 @@ function buildScss(done, file) {
 function buildOthers(done, file) {
   console.log(chalk.cyan(commandPrefx) + ' build others start...');
   let othersConfig = {};
-  const isContinue = runBuildConfig('buildScss', [othersConfig, done, file]);
+  const isContinue = runEsmConfigHook('buildScss', [othersConfig, done, file]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
