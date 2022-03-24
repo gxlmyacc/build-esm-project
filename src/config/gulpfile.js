@@ -1,3 +1,4 @@
+const chalk = require('chalk');
 const { task, src, dest, series, watch, lastRun } = require('gulp');
 const babel = require('gulp-babel');
 const postcss = require('gulp-postcss');
@@ -7,6 +8,7 @@ const del = require('del');
 const sourcemaps = require('gulp-sourcemaps');
 const path = require('path');
 const fs = require('fs');
+const mergeBuildConfig = require('../index').mergeBuildConfig;
 
 const options = JSON.parse(process.env.options || {});
 const rootDir = options.root
@@ -30,31 +32,56 @@ const postcssConfigFile = options.postcssConfig
 const buildConfigFile = options.buildConfig
   ? path.resolve(rootDir, options.buildConfig)
   : path.resolve(rootDir, './build-esm.config.js');
+const commandPrefx = options.commandPrefx || '[build-esm-project]';
 
-let buildConfig = fs.existsSync(buildConfigFile)
-  ? require(buildConfigFile)
-  : {};
-if (typeof buildConfig === 'function') buildConfig = buildConfig(options);
+
+let globalBuildConfig;
+function runBuildConfig(hookName, args = []) {
+  if (!globalBuildConfig) {
+    let buildConfig = fs.existsSync(buildConfigFile)
+      ? require(buildConfigFile)
+      : {};
+    if (typeof buildConfig === 'function') buildConfig = buildConfig(options);
+    globalBuildConfig = mergeBuildConfig(buildConfig);
+  }
+
+  let isContinue = true;
+  if (!globalBuildConfig[hookName]) return isContinue;
+
+  globalBuildConfig[hookName].some(fn => {
+    isContinue = fn.apply(globalBuildConfig[hookName], args) !== false;
+    return !isContinue;
+  });
+
+  return isContinue;
+}
 
 function cleanEsm() {
-  if (buildConfig.cleanEsm) {
-    const isContinue = buildConfig.cleanEsm();
-    if (isContinue  === false) return;
+  console.log(chalk.cyan(commandPrefx) + ' clean esm...');
+
+  const isContinue = runBuildConfig('cleanEsm');
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' clean paused.');
+    return;
   }
   return del([
     `${distDir}/**/*`
   ], { cwd: rootDir });
 }
 
+
 function buildJs(done, file) {
+  console.log(chalk.cyan(commandPrefx) + ' build js start...');
+
   let config = fs.existsSync(babelConfigFile) ? require(babelConfigFile) : {};
   if (typeof config === 'function') config = config();
   if (!config.presets) config.presets = [];
   if (!config.plugins) config.plugins = [];
 
-  if (buildConfig.buildJs) {
-    const isContinue = buildConfig.buildJs(config, done, file);
-    if (isContinue === false) return;
+  const isContinue = runBuildConfig('buildJs', [config, done, file]);
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
   }
 
   src(file || jsMask, { cwd: rootDir, since: lastRun(buildJs), ignore })
@@ -62,7 +89,11 @@ function buildJs(done, file) {
     .pipe(babel(config))
     .pipe(sourcemaps.write('.'))
     .pipe(dest(distDir, { cwd: rootDir }))
-    .on('end', done);
+    .on('end', () => {
+      console.log(chalk.cyan(commandPrefx) + ' build js end.');
+
+      done && done.apply(arguments);
+    });
 }
 
 let postcssPlugins;
@@ -74,15 +105,17 @@ function getPostcssPlugins() {
 
   postcssPlugins = Object.keys(postcssConfig.plugins || {}).map(key => require(key)(postcssConfig.plugins[key]));
 
-  if (buildConfig.buildPostcss) {
-    const isContinue = buildConfig.buildPostcss(postcssPlugins);
-    if (isContinue === false) return;
+  const isContinue = runBuildConfig('buildPostcss', [postcssPlugins]);
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
   }
 
   return postcssPlugins;
 }
 
 function buildLess(done, file) {
+  console.log(chalk.cyan(commandPrefx) + ' build less start...');
   const postcssPlugins = getPostcssPlugins();
   if (!postcssPlugins) {
     done();
@@ -90,19 +123,25 @@ function buildLess(done, file) {
   }
 
   let lessConfig = {};
-  if (buildConfig.buildLess) {
-    const isContinue = buildConfig.buildLess(lessConfig, done, file);
-    if (isContinue === false) return;
+  const isContinue = runBuildConfig('buildLess', [lessConfig, done, file]);
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
   }
 
   src(file || lessMask, { cwd: rootDir, since: lastRun(buildLess), ignore })
-    .pipe(less())
+    .pipe(less(lessConfig))
     .pipe(postcss(postcssPlugins))
     .pipe(dest(distDir, { cwd: rootDir }))
-    .on('end', done);
+    .on('end', () => {
+      console.log(chalk.cyan(commandPrefx) + ' build less end.');
+
+      done && done.apply(arguments);
+    });
 }
 
 function buildScss(done, file) {
+  console.log(chalk.cyan(commandPrefx) + ' build scss start...');
   const postcssPlugins = getPostcssPlugins();
   if (!postcssPlugins) {
     done();
@@ -110,26 +149,39 @@ function buildScss(done, file) {
   }
 
   let scssConfig = {};
-  if (buildConfig.buildScss) {
-    const isContinue = buildConfig.buildScss(scssConfig, done, file);
-    if (isContinue === false) return;
+  const isContinue = runBuildConfig('buildScss', [scssConfig, done, file]);
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
   }
 
   src(file || scssMask, { cwd: rootDir, since: lastRun(buildScss), ignore })
     .pipe(sass(scssConfig).on('error', sass.logError))
     .pipe(postcss(postcssPlugins))
     .pipe(dest(distDir, { cwd: rootDir }))
-    .on('end', done);
+    .on('end', () => {
+      console.log(chalk.cyan(commandPrefx) + ' build scss end.');
+
+      done && done.apply(arguments);
+    });
 }
 
 function buildOthers(done, file) {
-  if (buildConfig.buildOthers) {
-    const isContinue = buildConfig.buildOthers(done, file);
-    if (isContinue === false) return;
+  console.log(chalk.cyan(commandPrefx) + ' build others start...');
+  let othersConfig = {};
+  const isContinue = runBuildConfig('buildScss', [othersConfig, done, file]);
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
   }
+
   src(file || otherMask, { cwd: rootDir, since: lastRun(buildOthers), ignore })
     .pipe(dest(distDir), { cwd: rootDir })
-    .on('end', done);
+    .on('end', () => {
+      console.log(chalk.cyan(commandPrefx) + ' build others end.');
+
+      done && done.apply(arguments);
+    });
 }
 
 const build = series(buildJs, buildScss, buildLess, buildOthers);
@@ -141,10 +193,10 @@ task('start', series(build, done => {
     cwd: rootDir,
     ignore,
   }, series(cb => {
-    console.log('build all start...');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build all start...');
     cb();
   }, build, cb => {
-    console.log('build all end.');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build all end.');
     cb();
   }));
   watch([jsMask], {
@@ -152,10 +204,10 @@ task('start', series(build, done => {
     cwd: rootDir,
     ignore,
   }, series(cb => {
-    console.log('build js start...');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build js start...');
     cb();
   }, buildJs, cb => {
-    console.log('build js end.');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build js end.');
     cb();
   }));
 
@@ -164,10 +216,10 @@ task('start', series(build, done => {
     cwd: rootDir,
     ignore,
   }, series(cb => {
-    console.log('build less start...');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build less start...');
     cb();
   }, buildLess, cb => {
-    console.log('build less end.');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build less end.');
     cb();
   }));
 
@@ -176,10 +228,10 @@ task('start', series(build, done => {
     cwd: rootDir,
     ignore,
   }, series(cb => {
-    console.log('build scss start...');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build scss start...');
     cb();
   }, buildScss, cb => {
-    console.log('build scss end.');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build scss end.');
     cb();
   }));
 
@@ -188,10 +240,10 @@ task('start', series(build, done => {
     cwd: rootDir,
     ignore,
   }, series(cb => {
-    console.log('build others start...');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build others start...');
     cb();
   }, buildOthers, cb => {
-    console.log('build others end.');
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build others end.');
     cb();
   }));
 
@@ -205,15 +257,15 @@ task('start', series(build, done => {
     if (path.extname(file) === '.scss') file = file.replace(/\.scss$/, '.css');
     del([file], { force: true });
     if (path.extname(file) === '.js') del([`${file}.map`], { force: true, cwd: rootDir });
-    console.log(`File ${file} was removed`);
+    console.log(chalk.cyan(commandPrefx) + `[watcher] File ${file} was removed`);
   });
   watcher.on('unlinkDir', file => {
     file = path.relative(rootDir, file);
     file = `./${file.replace(/\\/g, '/')}`.replace(srcDir, distDir);
     del([file], { force: true, cwd: rootDir });
-    console.log(`Dir ${file} was removed`);
+    console.log(chalk.cyan(commandPrefx) + `[watcher] Dir ${file} was removed`);
   });
 
-  console.log('watcher started.');
+  console.log(chalk.cyan(commandPrefx) + '[watcher] watcher started.');
   done();
 }));

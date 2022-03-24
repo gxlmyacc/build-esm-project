@@ -1,6 +1,8 @@
 const spawn = require('cross-spawn');
 
-module.exports = function execCommand(name) {
+function execCommand(name, options = {}) {
+  process.env.options = JSON.stringify(options);
+
   const result = spawn.sync(
     'node',
     [].concat(require.resolve('./scripts/' + name)),
@@ -23,4 +25,45 @@ module.exports = function execCommand(name) {
     process.exit(1);
   }
   process.exit(result.status);
+}
+
+/**
+ * @typedef {{
+ *   cleanEsm?: () => void|false,
+ *   buildJs?: (babelConfig: { presets?: Record<string, any>, plugins?: Record<string, any> }, done: (result) => void, file: any) => void|false,
+ *   buildLess?: (lessConfig: Record<string, any>, done: (result) => void, file: any) => void|false,
+ *   buildScss?: (scssConfig: Record<string, any>, done: (result) => void, file: any) => void|false,
+ *   buildPostcss?: (postcssPlugins: Record<string, function>) => void|false,
+ *   buildOthers?: (othersConfig: Record<string, any>, done: (result) => void, file: any) => void|false
+ * }} BuildConfig
+ */
+
+/**
+ * @typedef {(...buildConfigs: BuildConfig[]) => { [key: string]: function[] } } MergeBuildConfig
+ */
+
+/** @type {MergeBuildConfig} */
+const mergeBuildConfig = function (...buildConfigs) {
+  const result = {};
+  if (!buildConfigs.length) return result;
+
+  const keysMap = {};
+  buildConfigs.forEach(buildConfig => {
+    if (!buildConfig) return;
+    Object.keys(buildConfig).forEach(key => keysMap[key] = true);
+  });
+  Object.keys(keysMap).forEach(key => {
+    if (!result[key]) result[key] = [];
+    buildConfigs.forEach(buildConfig => {
+      if (!buildConfig) return;
+      if (Array.isArray(buildConfig[key])) Array.prototype.push.apply(result[key], buildConfig[key]);
+      else result[key].push(buildConfig[key]);
+    });
+  });
+  return result;
+};
+
+module.exports = {
+  execCommand,
+  mergeBuildConfig
 };

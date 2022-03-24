@@ -63,7 +63,7 @@ module.exports = {
   buildPostcss(postcssPlugins) {
     // return false will skip
   },
-  buildOthers(done, file) {
+  buildOthers(othersConfig, done, file) {
     // return false will skip
   },
 }
