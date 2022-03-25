@@ -1,3 +1,4 @@
+/** @type {import('../types/index').Start} */
 function start(execCommand, options = {}) {
   if (!execCommand) {
     throw new Error('[build-esm-project][start]execCommand can not be null!');
@@ -35,7 +36,8 @@ function start(execCommand, options = {}) {
       .option('--ignore <path>', 'provide igonre transfrom files')
       .option('--src <path>', 'source directory, default is src')
       .option('--out <path>', 'output directory, default is esm')
-      .option('-ts, --typescript, ', 'is typescript project');
+      .option('-ts, --typescript, ', 'is typescript project')
+      .option('--sourcemap, ', 'generate scripts`s sourcemap');
 
     if (options.command) {
       const isContinue = options.command(commandName, command, {

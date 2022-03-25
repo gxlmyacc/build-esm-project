@@ -1,5 +1,7 @@
 const spawn = require('cross-spawn');
+const start = require('./start');
 
+/** @type {import('../types/index').ExecCommand} */
 function execCommand(name, options = {}) {
   process.env.options = JSON.stringify(options);
 
@@ -27,22 +29,7 @@ function execCommand(name, options = {}) {
   process.exit(result.status);
 }
 
-/**
- * @typedef {{
- *   cleanEsm?: () => void|false,
- *   buildJs?: (babelConfig: { presets?: Record<string, any>, plugins?: Record<string, any> }, done: (result) => void, file: any) => void|false,
- *   buildLess?: (lessConfig: Record<string, any>, done: (result) => void, file: any) => void|false,
- *   buildScss?: (scssConfig: Record<string, any>, done: (result) => void, file: any) => void|false,
- *   buildPostcss?: (postcssPlugins: Record<string, function>) => void|false,
- *   buildOthers?: (othersConfig: Record<string, any>, done: (result) => void, file: any) => void|false
- * }} EsmConfig
- */
-
-/**
- * @typedef {(...buildConfigs: EsmConfig[]) => { [key: string]: function[] } } MergeEsmConfig
- */
-
-/** @type {MergeEsmConfig} */
+/** @type {import('../types/index').MergeEsmConfig} */
 const mergeEsmConfig = function (...buildConfigs) {
   const result = {};
   if (!buildConfigs.length) return result;
@@ -64,6 +51,7 @@ const mergeEsmConfig = function (...buildConfigs) {
 };
 
 module.exports = {
+  start,
   execCommand,
   mergeEsmConfig
 };

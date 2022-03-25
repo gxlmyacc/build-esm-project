@@ -25,6 +25,7 @@ support "build"、"start" command
 ##   --src <path>             source directory, default is src
 ##   --out <path>             output directory, default is esm
 ##    -ts, --typescript,      is typescript project
+##    --sourcemap             generate scripts`s sourcemap
 
 esm-project build
 ```
@@ -39,6 +40,7 @@ esm-project build
 ##   --src <path>             source directory, default is src
 ##   --out <path>             output directory, default is esm
 ##    -ts, --typescript,      is typescript project
+##    --sourcemap             generate scripts`s sourcemap
 
 esm-project start
 ```
@@ -47,25 +49,84 @@ you also can config the `esm-project.config.js` to custom do something:
 ```js
 // esm-project.config.js: 
 module.exports = {
-  cleanEsm() {
+  cleanEsm(buildOptions, options) {
     // return false will skip
   },
-  buildJs(babelConfig, done, file) {
+  buildJs(buildOptions, babelConfig, options) {
     // return false will skip
   },
-  buildLess(lessConfig, done, file) {
+  buildPostcss(buildOptions, postcssPlugins, options) {
     // return false will skip
   },
-  buildScss(scssConfig, done, file) {
+  buildLess(buildOptions, lessConfig, options) {
     // return false will skip
   },
-  buildPostcss(postcssPlugins) {
+  buildScss(buildOptions, scssConfig, options) {
     // return false will skip
   },
-  buildOthers(othersConfig, done, file) {
+  buildCss(buildOptions, cssConfig, options) {
+    // return false will skip
+  },
+  buildOthers(buildOptions, othersConfig, options) {
     // return false will skip
   },
 }
+```
+
+`esm-project.config.js`中的参数定义如下：
+```ts
+interface BuildOptions {
+   root?: string,
+   esmConfig?: string,
+   babelConfig?: string,
+   postcssConfig?: string,
+   ignore?: string[],
+   src?: string,
+   out?: string,
+   typescript?: boolean,
+   sourcemap?: boolean,
+   [key: string]: any
+}
+
+interface BabelConfig {
+   presets?: Record<string, any>,
+   plugins?: Record<string, any>,
+   [key: string]: any
+}
+
+
+interface GulpOptions {
+  rootDir: string,
+  distDir: string,
+  srcDir: string,
+  cssMask: string,
+  scssMask: string,
+  lessMask: string,
+  otherMask: string,
+  ignore: string[],
+  babelConfigFile: string,
+  postcssConfigFile: string,
+  esmConfigFile: string,
+  commandPrefx: string,
+
+  [key: string]: any
+}
+
+interface GulpOptionsWithDone extends GulpOptions {
+  done: (result?: any) => void,
+  file: any
+}
+
+interface EsmConfig {
+  cleanEsm?: (buildConfig: BuildOptions, options: GulpOptions) => void|false,
+  buildJs?: (buildConfig: buildOptions, babelConfig: BabelConfig, options: GulpOptionsWithDone) => void|false,
+  buildPostcss?: (buildConfig: buildOptions, postcssPlugins: Record<string, function>, options: GulpOptions) => void|false,
+  buildLess?: (buildConfig: buildOptions, lessConfig: Record<string, any>, options: GulpOptionsWithDone) => void|false,
+  buildScss?: (buildConfig: buildOptions, scssConfig: Record<string, any>, options: GulpOptionsWithDone) => void|false,
+  buildCss?: (buildConfig: buildOptions, cssConfig: { plugins: Record<string, function> }, options: GulpOptionsWithDone) => void|false,
+  buildOthers?: (buildConfig: buildOptions, othersConfig: Record<string, any>, options: GulpOptionsWithDone) => void|false
+}
+
 ```
 
 

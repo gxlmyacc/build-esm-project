@@ -8,40 +8,37 @@ const del = require('del');
 const sourcemaps = require('gulp-sourcemaps');
 const path = require('path');
 const fs = require('fs');
+const parseOptions = require('./utils').parseOptions;
 const mergeEsmConfig = require('../index').mergeEsmConfig;
 
-const options = JSON.parse(process.env.options || {});
-const rootDir = options.root
-  ? path.resolve(process.cwd(), options.root)
-  : process.cwd();
-const srcDir = options.src ? options.src : './src';
-const distDir = options.out ? options.out : './esm';
-const jsMask = `${srcDir}/**/*.{js,jsx${options.typescript ? 'ts,tsx' : ''}}`;
-const lessMask = `${srcDir}/**/*.less`;
-const scssMask = `${srcDir}/**/*.scss`;
-const otherMask = `${srcDir}/**/*.{css,png,jpg,gif,ico,json,svg}`;
-const ignore = options.ignore
-  ? options.ignore.split(',').filter(Boolean)
-  : [];
-const babelConfigFile = options.babelConfig
-  ? path.resolve(rootDir, options.babelConfig)
-  : path.resolve(rootDir, './babel.config.js');
-const postcssConfigFile = options.postcssConfig
-  ? path.resolve(rootDir, options.postcssConfig)
-  : path.resolve(rootDir, './postcss.config.js');
-const esmConfigFile = options.esmConfig
-  ? path.resolve(rootDir, options.esmConfig)
-  : path.resolve(rootDir, './esm-project.config.js');
-const commandPrefx = options.commandPrefx || '[build-esm-project]';
-
-
 let globalEsmConfig;
+
+const options = parseOptions(process.env.options);
+
+const {
+  buildOptions,
+  rootDir,
+  distDir,
+  srcDir,
+  jsMask,
+  cssMask,
+  scssMask,
+  lessMask,
+  otherMask,
+  ignore,
+  babelConfigFile,
+  postcssConfigFile,
+  esmConfigFile,
+  commandPrefx,
+  sourcemap
+} = options;
+
 function runEsmConfigHook(hookName, args = []) {
   if (!globalEsmConfig) {
     let esmConfig = fs.existsSync(esmConfigFile)
       ? require(esmConfigFile)
       : {};
-    if (typeof esmConfig === 'function') esmConfig = esmConfig(options);
+    if (typeof esmConfig === 'function') esmConfig = esmConfig(buildOptions);
     globalEsmConfig = mergeEsmConfig(esmConfig);
   }
 
@@ -59,7 +56,7 @@ function runEsmConfigHook(hookName, args = []) {
 function cleanEsm() {
   console.log(chalk.cyan(commandPrefx) + ' clean esm...');
 
-  const isContinue = runEsmConfigHook('cleanEsm');
+  const isContinue = runEsmConfigHook('cleanEsm', [buildOptions, options]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' clean paused.');
     return;
@@ -73,23 +70,28 @@ function cleanEsm() {
 function buildJs(done, file) {
   console.log(chalk.cyan(commandPrefx) + ' build js start...');
 
-  let config = fs.existsSync(babelConfigFile) ? require(babelConfigFile) : {};
-  if (typeof config === 'function') config = config();
-  if (!config.presets) config.presets = [];
-  if (!config.plugins) config.plugins = [];
+  let babelConfig = fs.existsSync(babelConfigFile) ? require(babelConfigFile) : {};
+  if (typeof config === 'function') babelConfig = babelConfig(buildOptions, options);
+  if (!babelConfig.presets) babelConfig.presets = [];
+  if (!babelConfig.plugins) babelConfig.plugins = [];
 
-  const isContinue = runEsmConfigHook('buildJs', [config, done, file]);
+  const isContinue = runEsmConfigHook('buildJs', [buildOptions, babelConfig, {
+    done,
+    file,
+    ...options
+  }]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
   }
 
-  src(file || jsMask, { cwd: rootDir, since: lastRun(buildJs), ignore })
-    .pipe(sourcemaps.init())
-    .pipe(babel(config))
-    .pipe(sourcemaps.write('.'))
-    .pipe(dest(distDir, { cwd: rootDir }))
-    .on('end', () => {
+  let step = src(file || jsMask, { cwd: rootDir, since: lastRun(buildJs), ignore });
+  if (sourcemap) step = step.pipe(sourcemaps.init());
+  step = step.pipe(babel(babelConfig));
+  if (sourcemap) step = step.pipe(sourcemaps.write('.'));
+
+  step.pipe(dest(distDir, { cwd: rootDir }))
+    .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build js end.');
 
       done && done.apply(null, arguments);
@@ -101,11 +103,11 @@ function getPostcssPlugins() {
   if (postcssPlugins) return postcssPlugins;
 
   let postcssConfig = fs.existsSync(postcssConfigFile) ? require(postcssConfigFile) : {};
-  if (typeof postcssConfig === 'function') postcssConfig = postcssConfig();
+  if (typeof postcssConfig === 'function') postcssConfig = postcssConfig(buildOptions, options);
 
   postcssPlugins = Object.keys(postcssConfig.plugins || {}).map(key => require(key)(postcssConfig.plugins[key]));
 
-  const isContinue = runEsmConfigHook('buildPostcss', [postcssPlugins]);
+  const isContinue = runEsmConfigHook('buildPostcss', [buildOptions, postcssPlugins, options]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -123,7 +125,11 @@ function buildLess(done, file) {
   }
 
   let lessConfig = {};
-  const isContinue = runEsmConfigHook('buildLess', [lessConfig, done, file]);
+  const isContinue = runEsmConfigHook('buildLess', [buildOptions, lessConfig, {
+    done,
+    file,
+    ...options
+  }]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -133,7 +139,7 @@ function buildLess(done, file) {
     .pipe(less(lessConfig))
     .pipe(postcss(postcssPlugins))
     .pipe(dest(distDir, { cwd: rootDir }))
-    .on('end', () => {
+    .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build less end.');
 
       done && done.apply(null, arguments);
@@ -149,7 +155,11 @@ function buildScss(done, file) {
   }
 
   let scssConfig = {};
-  const isContinue = runEsmConfigHook('buildScss', [scssConfig, done, file]);
+  const isContinue = runEsmConfigHook('buildScss', [buildOptions, scssConfig, {
+    done,
+    file,
+    ...options
+  }]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -159,8 +169,37 @@ function buildScss(done, file) {
     .pipe(sass(scssConfig).on('error', sass.logError))
     .pipe(postcss(postcssPlugins))
     .pipe(dest(distDir, { cwd: rootDir }))
-    .on('end', () => {
+    .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build scss end.');
+
+      done && done.apply(null, arguments);
+    });
+}
+
+function buildCss(done, file) {
+  console.log(chalk.cyan(commandPrefx) + ' build css start...');
+  const postcssPlugins = getPostcssPlugins();
+  if (!postcssPlugins) {
+    done();
+    return;
+  }
+
+  let cssConfig = { plugins: postcssPlugins };
+  const isContinue = runEsmConfigHook('buildCss', [buildOptions, cssConfig, {
+    done,
+    file,
+    ...options
+  }]);
+  if (isContinue === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
+  }
+
+  src(file || cssMask, { cwd: rootDir, since: lastRun(buildCss), ignore })
+    .pipe(postcss(cssConfig.plugins))
+    .pipe(dest(distDir, { cwd: rootDir }))
+    .on('end', function () {
+      console.log(chalk.cyan(commandPrefx) + ' build css end.');
 
       done && done.apply(null, arguments);
     });
@@ -169,7 +208,11 @@ function buildScss(done, file) {
 function buildOthers(done, file) {
   console.log(chalk.cyan(commandPrefx) + ' build others start...');
   let othersConfig = {};
-  const isContinue = runEsmConfigHook('buildScss', [othersConfig, done, file]);
+  const isContinue = runEsmConfigHook('buildScss', [buildOptions, othersConfig, {
+    done,
+    file,
+    ...options
+  }]);
   if (isContinue  === false) {
     console.log(chalk.cyan(commandPrefx) + ' build paused.');
     return;
@@ -177,14 +220,14 @@ function buildOthers(done, file) {
 
   src(file || otherMask, { cwd: rootDir, since: lastRun(buildOthers), ignore })
     .pipe(dest(distDir), { cwd: rootDir })
-    .on('end', () => {
+    .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build others end.');
 
       done && done.apply(null, arguments);
     });
 }
 
-const build = series(buildJs, buildScss, buildLess, buildOthers);
+const build = series(buildJs, buildScss, buildLess, buildCss, buildOthers);
 task('build', series(cleanEsm, build));
 
 task('start', series(build, done => {
@@ -232,6 +275,18 @@ task('start', series(build, done => {
     cb();
   }, buildScss, cb => {
     console.log(chalk.cyan(commandPrefx) + '[watcher] build scss end.');
+    cb();
+  }));
+
+  watch([cssMask], {
+    events: ['add', 'change'],
+    cwd: rootDir,
+    ignore,
+  }, series(cb => {
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build css start...');
+    cb();
+  }, buildCss, cb => {
+    console.log(chalk.cyan(commandPrefx) + '[watcher] build css end.');
     cb();
   }));
 
