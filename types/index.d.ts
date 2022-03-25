@@ -36,6 +36,7 @@ export interface GulpOptions {
   rootDir: string,
   distDir: string,
   srcDir: string,
+  jsMask: string,
   cssMask: string,
   scssMask: string,
   lessMask: string,
@@ -45,6 +46,7 @@ export interface GulpOptions {
   postcssConfigFile: string,
   esmConfigFile: string,
   commandPrefx: string,
+  sourcemap?: boolean,
 
   [key: string]: any
 }
