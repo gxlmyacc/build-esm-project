@@ -79,26 +79,26 @@ module.exports = {
 
 The following is the type definition of `esm-project.config.js`:
 ```ts
-interface BuildOptions<T extends Record<string, any> = any> {
-   root?: string,
-   esmConfig?: string,
-   babelConfig?: string,
-   postcssConfig?: string,
-   lessConfig?: string,
-   scssConfig?: string,
-   ignore?: string[],
-   src?: string,
-   out?: string,
-   typescript?: boolean,
-   sourcemap?: boolean,
-   [key: string]: any,
-   [key in T]: T[key]
+interface BuildOptions {
+  root?: string,
+  esmConfig?: string,
+  babelConfig?: string,
+  postcssConfig?: string,
+  lessConfig?: string,
+  scssConfig?: string,
+  ignore?: string[],
+  src?: string,
+  out?: string,
+  typescript?: boolean,
+  sourcemap?: boolean,
+
+  [key: string]: any
 }
 
 interface BabelConfig {
-   presets?: Record<string, any>,
-   plugins?: Record<string, any>,
-   [key: string]: any
+  presets?: Record<string, any>,
+  plugins?: Record<string, any>,
+  [key: string]: any
 }
 
 
@@ -122,6 +122,7 @@ interface GulpOptions {
 
   [key: string]: any
 }
+
 interface GulpOptionsWithDone extends GulpOptions {
   done: (result?: any) => void,
   file: any
