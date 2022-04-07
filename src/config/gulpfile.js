@@ -28,6 +28,8 @@ const {
   ignore,
   babelConfigFile,
   postcssConfigFile,
+  lessConfigFile,
+  scssConfigFile,
   esmConfigFile,
   commandPrefx,
   sourcemap
@@ -71,7 +73,7 @@ function buildJs(done, file) {
   console.log(chalk.cyan(commandPrefx) + ' build js start...');
 
   let babelConfig = fs.existsSync(babelConfigFile) ? require(babelConfigFile) : {};
-  if (typeof config === 'function') babelConfig = babelConfig(buildOptions, options);
+  if (typeof babelConfig === 'function') babelConfig = babelConfig(buildOptions, options);
   if (!babelConfig.presets) babelConfig.presets = [];
   if (!babelConfig.plugins) babelConfig.plugins = [];
 
@@ -124,7 +126,11 @@ function buildLess(done, file) {
     return;
   }
 
-  let lessConfig = {};
+  let lessConfig = fs.existsSync(lessConfigFile) ? require(lessConfigFile) : {
+    javascriptEnabled: true,
+  };
+  if (typeof lessConfig === 'function') lessConfig = lessConfig(buildOptions, options);
+
   const isContinue = runEsmConfigHook('buildLess', [buildOptions, lessConfig, {
     done,
     file,
@@ -154,7 +160,9 @@ function buildScss(done, file) {
     return;
   }
 
-  let scssConfig = {};
+  let scssConfig = fs.existsSync(scssConfigFile) ? require(scssConfigFile) : {};
+  if (typeof scssConfig === 'function') scssConfig = scssConfig(buildOptions, options);
+
   const isContinue = runEsmConfigHook('buildScss', [buildOptions, scssConfig, {
     done,
     file,

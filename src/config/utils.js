@@ -14,7 +14,7 @@ function parseOptions(options = process.env.options || []) {
   const lessMask = `${srcDir}/**/*.less`;
   const scssMask = `${srcDir}/**/*.scss`;
   const cssMask = `${srcDir}/**/*.css`;
-  const otherMask = `${srcDir}/**/*.{png,jpg,gif,ico,json,svg,map}`;
+  const otherMask = `${srcDir}/**/*.{png,jpg,jpeg,gif,ico,json,svg,svgz,map,html,eot,ttf,woff,woff2}`;
   const ignore = buildOptions.ignore
     ? buildOptions.ignore.split(',').filter(Boolean)
     : [];
@@ -24,6 +24,12 @@ function parseOptions(options = process.env.options || []) {
   const postcssConfigFile = buildOptions.postcssConfig
     ? path.resolve(rootDir, buildOptions.postcssConfig)
     : path.resolve(rootDir, './postcss.config.js');
+  const lessConfigFile = buildOptions.lessConfig
+    ? path.resolve(rootDir, buildOptions.lessConfig)
+    : path.resolve(rootDir, './less.config.js');
+  const scssConfigFile = buildOptions.scssConfig
+    ? path.resolve(rootDir, buildOptions.scssConfig)
+    : path.resolve(rootDir, './scss.config.js');
   const esmConfigFile = buildOptions.esmConfig
     ? path.resolve(rootDir, buildOptions.esmConfig)
     : path.resolve(rootDir, './esm-project.config.js');
@@ -43,6 +49,8 @@ function parseOptions(options = process.env.options || []) {
     ignore,
     babelConfigFile,
     postcssConfigFile,
+    lessConfigFile,
+    scssConfigFile,
     esmConfigFile,
     commandPrefx,
     sourcemap
