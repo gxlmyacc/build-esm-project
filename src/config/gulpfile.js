@@ -32,7 +32,8 @@ const {
   scssConfigFile,
   esmConfigFile,
   commandPrefx,
-  sourcemap
+  sourcemap,
+  disableComplieStyles
 } = options;
 
 function runEsmConfigHook(hookName, args = []) {
@@ -118,7 +119,33 @@ function getPostcssPlugins() {
   return postcssPlugins;
 }
 
+function buildOthers(done, file) {
+  console.log(chalk.cyan(commandPrefx) + ' build others start...');
+  let othersConfig = {};
+  const isContinue = runEsmConfigHook('buildOthers', [buildOptions, othersConfig, {
+    done,
+    file,
+    ...options
+  }]);
+  if (isContinue  === false) {
+    console.log(chalk.cyan(commandPrefx) + ' build paused.');
+    return;
+  }
+
+  src(file || otherMask, { cwd: rootDir, since: lastRun(buildOthers), ignore })
+    .pipe(dest(distDir), { cwd: rootDir })
+    .on('end', function () {
+      console.log(chalk.cyan(commandPrefx) + ' build others end.');
+
+      done && done.apply(null, arguments);
+    });
+}
+
 function buildLess(done, file) {
+  if (disableComplieStyles) {
+    buildOthers(done, file || lessMask);
+    return;
+  }
   console.log(chalk.cyan(commandPrefx) + ' build less start...');
   const postcssPlugins = getPostcssPlugins();
   if (!postcssPlugins) {
@@ -153,6 +180,10 @@ function buildLess(done, file) {
 }
 
 function buildScss(done, file) {
+  if (disableComplieStyles) {
+    buildOthers(done, file || scssMask);
+    return;
+  }
   console.log(chalk.cyan(commandPrefx) + ' build scss start...');
   const postcssPlugins = getPostcssPlugins();
   if (!postcssPlugins) {
@@ -185,6 +216,10 @@ function buildScss(done, file) {
 }
 
 function buildCss(done, file) {
+  if (disableComplieStyles) {
+    buildOthers(done, file || cssMask);
+    return;
+  }
   console.log(chalk.cyan(commandPrefx) + ' build css start...');
   const postcssPlugins = getPostcssPlugins();
   if (!postcssPlugins) {
@@ -213,27 +248,6 @@ function buildCss(done, file) {
     });
 }
 
-function buildOthers(done, file) {
-  console.log(chalk.cyan(commandPrefx) + ' build others start...');
-  let othersConfig = {};
-  const isContinue = runEsmConfigHook('buildScss', [buildOptions, othersConfig, {
-    done,
-    file,
-    ...options
-  }]);
-  if (isContinue  === false) {
-    console.log(chalk.cyan(commandPrefx) + ' build paused.');
-    return;
-  }
-
-  src(file || otherMask, { cwd: rootDir, since: lastRun(buildOthers), ignore })
-    .pipe(dest(distDir), { cwd: rootDir })
-    .on('end', function () {
-      console.log(chalk.cyan(commandPrefx) + ' build others end.');
-
-      done && done.apply(null, arguments);
-    });
-}
 
 const build = series(buildJs, buildScss, buildLess, buildCss, buildOthers);
 task('build', series(cleanEsm, build));

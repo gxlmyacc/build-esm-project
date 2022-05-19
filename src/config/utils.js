@@ -35,6 +35,7 @@ function parseOptions(options = process.env.options || []) {
     : path.resolve(rootDir, './esm-project.config.js');
   const commandPrefx = buildOptions.commandPrefx || '[build-esm-project]';
   const sourcemap = buildOptions.sourcemap;
+  const disableComplieStyles = buildOptions.disableComplieStyles;
 
   return {
     buildOptions,
@@ -53,7 +54,8 @@ function parseOptions(options = process.env.options || []) {
     scssConfigFile,
     esmConfigFile,
     commandPrefx,
-    sourcemap
+    sourcemap,
+    disableComplieStyles
   };
 }
 

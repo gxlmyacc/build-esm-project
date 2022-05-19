@@ -35,6 +35,7 @@ function start(execCommand, options = {}) {
       .option('--postcss-config <path>', 'provide postcss config file path, default is process.cwd()/postcss.config.js')
       .option('--less-config <path>', 'provide less config file path, default is process.cwd()/less.config.js')
       .option('--scss-config <path>', 'provide scss config file path, default is process.cwd()/scss.config.js')
+      .option('--disable-complie-styles', 'whether disable complie styles')
       .option('--ignore <path>', 'provide igonre transfrom files')
       .option('--src <path>', 'source directory, default is src')
       .option('--out <path>', 'output directory, default is esm')
