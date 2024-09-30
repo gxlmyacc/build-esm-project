@@ -30,9 +30,13 @@ function parseOptions(options = process.env.options || []) {
   const scssConfigFile = buildOptions.scssConfig
     ? path.resolve(rootDir, buildOptions.scssConfig)
     : path.resolve(rootDir, './scss.config.js');
+  const aliasConfigFile = buildOptions.aliasConfig
+    ? path.resolve(rootDir, buildOptions.aliasConfig)
+    : path.resolve(rootDir, './alias.config.js');
   const esmConfigFile = buildOptions.esmConfig
     ? path.resolve(rootDir, buildOptions.esmConfig)
     : path.resolve(rootDir, './esm-project.config.js');
+
   const commandPrefx = buildOptions.commandPrefx || '[build-esm-project]';
   const sourcemap = buildOptions.sourcemap;
   const disableComplieStyles = buildOptions.disableComplieStyles;
@@ -52,6 +56,7 @@ function parseOptions(options = process.env.options || []) {
     postcssConfigFile,
     lessConfigFile,
     scssConfigFile,
+    aliasConfigFile,
     esmConfigFile,
     commandPrefx,
     sourcemap,

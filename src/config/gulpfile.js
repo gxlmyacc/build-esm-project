@@ -4,6 +4,8 @@ const babel = require('gulp-babel');
 const postcss = require('gulp-postcss');
 const less = require('gulp-less');
 const sass = require('gulp-sass')(require('sass'));
+const npmSass = require('npm-sass');
+
 const del = require('del');
 const sourcemaps = require('gulp-sourcemaps');
 const path = require('path');
@@ -30,6 +32,7 @@ const {
   postcssConfigFile,
   lessConfigFile,
   scssConfigFile,
+  aliasConfigFile,
   esmConfigFile,
   commandPrefx,
   sourcemap,
@@ -54,6 +57,20 @@ function runEsmConfigHook(hookName, args = []) {
   });
 
   return isContinue;
+}
+
+let aliasConfig = null;
+function getAliasConfig() {
+  if (aliasConfig) return aliasConfig;
+  aliasConfig = aliasConfigFile && fs.existsSync(aliasConfigFile)
+    ? require(
+      path.isAbsolute(aliasConfigFile) ? aliasConfigFile : path.join(rootDir, aliasConfigFile)
+    )
+    : {};
+  if (aliasConfig && aliasConfig.alias) aliasConfig = aliasConfig.alias;
+  if (!aliasConfig['~']) aliasConfig['~'] = srcDir;
+  if (!aliasConfig['@']) aliasConfig['@'] = srcDir;
+  return aliasConfig;
 }
 
 function cleanEsm() {
@@ -193,6 +210,19 @@ function buildScss(done, file) {
 
   let scssConfig = fs.existsSync(scssConfigFile) ? require(scssConfigFile) : {};
   if (typeof scssConfig === 'function') scssConfig = scssConfig(buildOptions, options);
+
+  const aliasConfig = getAliasConfig();
+
+  scssConfig = {
+    importer: (url, file, done) => {
+      let aliasName = Object.keys(aliasConfig).find(key => url.startsWith(key));
+      if (aliasName) {
+        url = path.relative(path.dirname(file), path.join(aliasConfig[aliasName], url.replace(aliasName, '')));
+      }
+      return npmSass.importer(url, file, done);
+    },
+    ...scssConfig
+  };
 
   const isContinue = runEsmConfigHook('buildScss', [buildOptions, scssConfig, {
     done,

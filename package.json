@@ -1,9 +1,8 @@
 {
   "name": "build-esm-project",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "a build command that transform js/jsx/images/scss with babel/postcss",
-  "scripts": {
-  },
+  "scripts": {},
   "bin": {
     "esm-project": "./bin/index.js"
   },
@@ -30,11 +29,11 @@
     "gulp-postcss": "^9.0.1",
     "gulp-sass": "^5.1.0",
     "gulp-sourcemaps": "^3.0.0",
+    "npm-sass": "^3.1.0",
     "sass": "^1.49.9",
     "update-notifier": "^5.1.0"
   },
-  "peerDependencies": {
-  },
+  "peerDependencies": {},
   "devDependencies": {
     "@babel/core": "^7.16.0",
     "@babel/plugin-proposal-class-properties": "^7.16.0",
