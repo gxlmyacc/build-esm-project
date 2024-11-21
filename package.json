@@ -1,10 +1,10 @@
 {
   "name": "build-esm-project",
-  "version": "0.1.0",
+  "version": "0.1.1-alpha.0",
   "description": "a build command that transform js/jsx/images/scss with babel/postcss",
   "scripts": {},
   "bin": {
-    "esm-project": "./bin/index.js"
+    "esm-project": "bin/index.js"
   },
   "main": "src/index.js",
   "typings": "types/index.d.ts",
@@ -12,7 +12,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gxlmyacc/build-esm-project.git"
+    "url": "git+https://github.com/gxlmyacc/build-esm-project.git"
   },
   "files": [
     "bin",

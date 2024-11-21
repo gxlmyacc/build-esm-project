@@ -76,7 +76,7 @@ export type MergeEsmConfig = (...buildConfigs: EsmConfig[]) => { [key: string]: 
 
 export type ExecCommand = (name: string, options?: CmdBuildOptions) => void;
 
-export type Start = (execCommand: ExecCommand, options: {
+export type Start = (execCommand: ExecCommand, options?: {
   command?: (commandName: string, command: any, options: {
     commandList: Record<string, string>,
     notifier: any,

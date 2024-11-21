@@ -28,6 +28,7 @@ const {
   lessMask,
   otherMask,
   ignore,
+  ignoreClean,
   babelConfigFile,
   postcssConfigFile,
   lessConfigFile,
@@ -75,6 +76,11 @@ function getAliasConfig() {
 
 function cleanEsm() {
   console.log(chalk.cyan(commandPrefx) + ' clean esm...');
+
+  if (ignoreClean) {
+    console.log(chalk.cyan(commandPrefx) + ' ignore clean esm.');
+    return Promise.resolve([]);
+  }
 
   const isContinue = runEsmConfigHook('cleanEsm', [buildOptions, options]);
   if (isContinue  === false) {
