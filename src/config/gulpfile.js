@@ -28,7 +28,7 @@ const {
   lessMask,
   otherMask,
   ignore,
-  ignoreClean,
+  disableClean,
   babelConfigFile,
   postcssConfigFile,
   lessConfigFile,
@@ -77,7 +77,12 @@ function getAliasConfig() {
 function cleanEsm() {
   console.log(chalk.cyan(commandPrefx) + ' clean esm...');
 
-  if (ignoreClean) {
+  if (srcDir === distDir) {
+    console.log(chalk.cyan(commandPrefx) + ' ignore clean esm because srcDir equals distDir.');
+    return Promise.resolve([]);
+  }
+
+  if (disableClean) {
     console.log(chalk.cyan(commandPrefx) + ' ignore clean esm.');
     return Promise.resolve([]);
   }
@@ -220,6 +225,7 @@ function buildScss(done, file) {
   const aliasConfig = getAliasConfig();
 
   scssConfig = {
+    silenceDeprecations: ['legacy-js-api'],
     importer: (url, file, done) => {
       let aliasName = Object.keys(aliasConfig).find(key => url.startsWith(key));
       if (aliasName) {

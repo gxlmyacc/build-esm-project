@@ -40,6 +40,7 @@ function parseOptions(options = process.env.options || []) {
   const commandPrefx = buildOptions.commandPrefx || '[build-esm-project]';
   const sourcemap = buildOptions.sourcemap;
   const disableComplieStyles = buildOptions.disableComplieStyles;
+  const disableClean = buildOptions.disableClean;
 
   return {
     buildOptions,
@@ -60,7 +61,8 @@ function parseOptions(options = process.env.options || []) {
     esmConfigFile,
     commandPrefx,
     sourcemap,
-    disableComplieStyles
+    disableComplieStyles,
+    disableClean
   };
 }
 
