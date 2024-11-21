@@ -24,6 +24,7 @@ support "build"、"start" command
 ##   --less-config <path>     provide less config file path, default is process.cwd()/less.config.js
 ##   --scss-config <path>     provide scss config file path, default is process.cwd()/scss.config.js
 ##   --disable-complie-styles whether disable complie styles
+##   --disable-clean whether  whether disable clean dist files
 ##   --ignore <path>          provide igonre transfrom files
 ##   --src <path>             source directory, default is src
 ##   --out <path>             output directory, default is esm
