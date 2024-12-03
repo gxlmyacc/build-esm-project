@@ -97,6 +97,36 @@ function cleanEsm() {
   ], { cwd: rootDir });
 }
 
+function babelSupportTs(babelConfig) {
+  let presetEnvIndex = -1;
+  let presetTypeScriptIndex = -1;
+  babelConfig.presets.forEach((preset, index) => {
+    let presetOptions;
+    if (Array.isArray(preset)) {
+      presetOptions = preset[1];
+      preset = preset[0];
+    } else if (typeof preset === 'string') {
+      presetOptions = {};
+      babelConfig.presets[index] = [preset, presetOptions];
+    } else {
+      return;
+    }
+    let presetName = preset.toLowerCase();
+    if (presetName.includes(path.join('@babel', 'preset-env')) || presetName.includes('@babel/preset-env')) {
+      presetEnvIndex = index;
+      return;
+    }
+    if (presetName.includes(path.join('@babel', 'typescript')) || presetName.includes('@babel/typescript')) {
+      presetTypeScriptIndex = index;
+    } else  if (presetName.includes(path.join('@babel', 'preset-typescript')) || presetName.includes('@babel/preset-typescript')) {
+      presetTypeScriptIndex = index;
+    }
+  });
+  if (presetEnvIndex > -1 && presetTypeScriptIndex === -1) {
+    babelConfig.presets.splice(presetEnvIndex, 0, ['@babel/preset-typescript', {}]);
+  }
+  return babelConfig;
+}
 
 function buildJs(done, file) {
   console.log(chalk.cyan(commandPrefx) + ' build js start...');
@@ -105,6 +135,10 @@ function buildJs(done, file) {
   if (typeof babelConfig === 'function') babelConfig = babelConfig(buildOptions, options);
   if (!babelConfig.presets) babelConfig.presets = [];
   if (!babelConfig.plugins) babelConfig.plugins = [];
+
+  if (buildOptions.typescript) {
+    babelSupportTs(babelConfig);
+  }
 
   const isContinue = runEsmConfigHook('buildJs', [buildOptions, babelConfig, {
     done,

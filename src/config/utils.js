@@ -10,11 +10,11 @@ function parseOptions(options = process.env.options || []) {
     : process.cwd();
   const srcDir = buildOptions.src ? buildOptions.src : './src';
   const distDir = buildOptions.out ? buildOptions.out : './esm';
-  const jsMask = `${srcDir}/**/*.{js,jsx${buildOptions.typescript ? 'ts,tsx' : ''}}`;
+  const jsMask = `${srcDir}/**/*.{js,jsx${buildOptions.typescript ? ',ts,tsx' : ''}}`;
   const lessMask = `${srcDir}/**/*.less`;
   const scssMask = `${srcDir}/**/*.scss`;
   const cssMask = `${srcDir}/**/*.css`;
-  const otherMask = `${srcDir}/**/*.{png,jpg,jpeg,gif,ico,json,svg,svgz,map,html,eot,ttf,woff,woff2}`;
+  const otherMask = `${srcDir}/**/*.{png,jpg,jpeg,gif,ico,webp,json,txt,svg,svgz,map,html,eot,ttf,woff,woff2}`;
   const ignore = buildOptions.ignore
     ? buildOptions.ignore.split(',').filter(Boolean)
     : [];
@@ -62,7 +62,7 @@ function parseOptions(options = process.env.options || []) {
     commandPrefx,
     sourcemap,
     disableComplieStyles,
-    disableClean
+    disableClean,
   };
 }
 
