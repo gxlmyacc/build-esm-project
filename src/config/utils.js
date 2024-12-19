@@ -31,8 +31,8 @@ function parseOptions(options = process.env.options || []) {
     : process.cwd();
   const srcDir = src || './src';
   const distDir = out || './esm';
-  const styleSrcDir = src ? styleSrc : srcDir;
-  const styleDistDir = out ? styleOut : distDir;
+  const styleSrcDir =  styleSrc || srcDir;
+  const styleDistDir = styleOut || distDir;
   const jsMask = `${srcDir}/**/*.{js,jsx,mjs,cjs${typescript ? ',ts,tsx,mts,cts' : ''}}`;
   const lessMask = `${styleSrcDir}/**/*.less`;
   const scssMask = `${styleSrcDir}/**/*.scss`;
