@@ -22,6 +22,8 @@ const {
   rootDir,
   distDir,
   srcDir,
+  styleSrcDir,
+  styleDistDir,
   jsMask,
   cssMask,
   scssMask,
@@ -92,9 +94,13 @@ function cleanEsm() {
     console.log(chalk.cyan(commandPrefx) + ' clean paused.');
     return;
   }
-  return del([
-    `${distDir}/**/*`
-  ], { cwd: rootDir });
+  const dirs = [
+    `${distDir}/**/*`,
+  ];
+  if (distDir !== styleDistDir && styleSrcDir !== styleDistDir) {
+    dirs.push(`${styleDistDir}/**/*`);
+  }
+  return del(dirs, { cwd: rootDir });
 }
 
 function babelSupportTs(babelConfig) {
@@ -123,7 +129,9 @@ function babelSupportTs(babelConfig) {
     }
   });
   if (presetEnvIndex > -1 && presetTypeScriptIndex === -1) {
-    babelConfig.presets.splice(presetEnvIndex, 0, ['@babel/preset-typescript', {}]);
+    babelConfig.presets.splice(presetEnvIndex, 0, ['@babel/preset-typescript', {
+      isTSX: true,
+    }]);
   }
   return babelConfig;
 }
@@ -195,7 +203,7 @@ function buildOthers(done, file) {
   }
 
   src(file || otherMask, { cwd: rootDir, since: lastRun(buildOthers), ignore })
-    .pipe(dest(distDir), { cwd: rootDir })
+    .pipe(dest(styleSrcDir), { cwd: rootDir })
     .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build others end.');
 
@@ -233,7 +241,7 @@ function buildLess(done, file) {
   src(file || lessMask, { cwd: rootDir, since: lastRun(buildLess), ignore })
     .pipe(less(lessConfig))
     .pipe(postcss(postcssPlugins))
-    .pipe(dest(distDir, { cwd: rootDir }))
+    .pipe(dest(styleDistDir, { cwd: rootDir }))
     .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build less end.');
 
@@ -283,7 +291,7 @@ function buildScss(done, file) {
   src(file || scssMask, { cwd: rootDir, since: lastRun(buildScss), ignore })
     .pipe(sass(scssConfig).on('error', sass.logError))
     .pipe(postcss(postcssPlugins))
-    .pipe(dest(distDir, { cwd: rootDir }))
+    .pipe(dest(styleDistDir, { cwd: rootDir }))
     .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build scss end.');
 
@@ -316,7 +324,7 @@ function buildCss(done, file) {
 
   src(file || cssMask, { cwd: rootDir, since: lastRun(buildCss), ignore })
     .pipe(postcss(cssConfig.plugins))
-    .pipe(dest(distDir, { cwd: rootDir }))
+    .pipe(dest(styleDistDir, { cwd: rootDir }))
     .on('end', function () {
       console.log(chalk.cyan(commandPrefx) + ' build css end.');
 
@@ -329,7 +337,11 @@ const build = series(buildJs, buildScss, buildLess, buildCss, buildOthers);
 task('build', series(cleanEsm, build));
 
 task('start', series(build, done => {
-  watch([`${srcDir}/**/*.*`], {
+  const dirs = [`${srcDir}/**/*.*`];
+  if (srcDir !== styleSrcDir) {
+    dirs.push(`${srcDir}/**/*.*`);
+  }
+  watch(dirs, {
     events: ['addDir'],
     cwd: rootDir,
     ignore,
@@ -400,13 +412,18 @@ task('start', series(build, done => {
     cb();
   }));
 
-  const watcher = watch([`${srcDir}/**/*.*`], {
+  const watcher = watch(dirs, {
     events: ['unlink', 'unlinkDir'],
     cwd: rootDir,
     ignore,
   });
   watcher.on('unlink', file => {
-    file = `./${file.replace(/\\/g, '/')}`.replace(srcDir, distDir);
+    file = `./${file.replace(/\\/g, '/')}`;
+    if (file.startsWith(srcDir)) {
+      file = file.replace(srcDir, distDir);
+    } else if (srcDir !== styleSrcDir && file.startsWith(styleSrcDir)) {
+      file = file.replace(styleSrcDir, styleDistDir);
+    }
     if (path.extname(file) === '.scss') file = file.replace(/\.scss$/, '.css');
     del([file], { force: true });
     if (path.extname(file) === '.js') del([`${file}.map`], { force: true, cwd: rootDir });
@@ -414,7 +431,12 @@ task('start', series(build, done => {
   });
   watcher.on('unlinkDir', file => {
     file = path.relative(rootDir, file);
-    file = `./${file.replace(/\\/g, '/')}`.replace(srcDir, distDir);
+    file = `./${file.replace(/\\/g, '/')}`;
+    if (file.startsWith(srcDir)) {
+      file = file.replace(srcDir, distDir);
+    } else if (srcDir !== styleSrcDir && file.startsWith(styleSrcDir)) {
+      file = file.replace(styleSrcDir, styleDistDir);
+    }
     del([file], { force: true, cwd: rootDir });
     console.log(chalk.cyan(commandPrefx) + `[watcher] Dir ${file} was removed`);
   });

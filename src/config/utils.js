@@ -5,48 +5,72 @@ function parseOptions(options = process.env.options || []) {
     ? JSON.parse(process.env.options || {})
     : options;
 
-  const rootDir = buildOptions.root
-    ? path.resolve(process.cwd(), buildOptions.root)
+  let {
+    root,
+    src,
+    out,
+    styleSrc,
+    styleOut,
+    ignore,
+    babelConfig,
+    postcssConfig,
+    lessConfig,
+    scssConfig,
+    aliasConfig,
+    esmConfig,
+    typescript,
+    disableComplieStyles,
+    disableClean,
+
+    commandPrefx = '[build-esm-project]',
+    ...restOptions
+  } = buildOptions;
+
+  const rootDir = root
+    ? path.resolve(process.cwd(), root)
     : process.cwd();
-  const srcDir = buildOptions.src ? buildOptions.src : './src';
-  const distDir = buildOptions.out ? buildOptions.out : './esm';
-  const jsMask = `${srcDir}/**/*.{js,jsx${buildOptions.typescript ? ',ts,tsx' : ''}}`;
-  const lessMask = `${srcDir}/**/*.less`;
-  const scssMask = `${srcDir}/**/*.scss`;
-  const cssMask = `${srcDir}/**/*.css`;
-  const otherMask = `${srcDir}/**/*.{png,jpg,jpeg,gif,ico,webp,json,txt,svg,svgz,map,html,eot,ttf,woff,woff2}`;
-  const ignore = buildOptions.ignore
-    ? buildOptions.ignore.split(',').filter(Boolean)
-    : [];
-  const babelConfigFile = buildOptions.babelConfig
-    ? path.resolve(rootDir, buildOptions.babelConfig)
+  const srcDir = src || './src';
+  const distDir = out || './esm';
+  const styleSrcDir = src ? styleSrc : srcDir;
+  const styleDistDir = out ? styleOut : distDir;
+  const jsMask = `${srcDir}/**/*.{js,jsx,mjs,cjs${typescript ? ',ts,tsx,mts,cts' : ''}}`;
+  const lessMask = `${styleSrcDir}/**/*.less`;
+  const scssMask = `${styleSrcDir}/**/*.scss`;
+  const cssMask = `${styleSrcDir}/**/*.css`;
+  const otherMask = `${styleSrcDir}/**/*.{png,jpg,jpeg,gif,ico,webp,json,txt,svg,svgz,map,html,eot,ttf,woff,woff2}`;
+  if (ignore) {
+    ignore.split(',').filter(Boolean);
+  } else {
+    ignore = [];
+  }
+  const babelConfigFile = babelConfig
+    ? path.resolve(rootDir, babelConfig)
     : path.resolve(rootDir, './babel.config.js');
-  const postcssConfigFile = buildOptions.postcssConfig
-    ? path.resolve(rootDir, buildOptions.postcssConfig)
+  const postcssConfigFile = postcssConfig
+    ? path.resolve(rootDir, postcssConfig)
     : path.resolve(rootDir, './postcss.config.js');
-  const lessConfigFile = buildOptions.lessConfig
-    ? path.resolve(rootDir, buildOptions.lessConfig)
+  const lessConfigFile = lessConfig
+    ? path.resolve(rootDir, lessConfig)
     : path.resolve(rootDir, './less.config.js');
-  const scssConfigFile = buildOptions.scssConfig
-    ? path.resolve(rootDir, buildOptions.scssConfig)
+  const scssConfigFile = scssConfig
+    ? path.resolve(rootDir, scssConfig)
     : path.resolve(rootDir, './scss.config.js');
-  const aliasConfigFile = buildOptions.aliasConfig
-    ? path.resolve(rootDir, buildOptions.aliasConfig)
+  const aliasConfigFile = aliasConfig
+    ? path.resolve(rootDir, aliasConfig)
     : path.resolve(rootDir, './alias.config.js');
-  const esmConfigFile = buildOptions.esmConfig
-    ? path.resolve(rootDir, buildOptions.esmConfig)
+  const esmConfigFile = esmConfig
+    ? path.resolve(rootDir, esmConfig)
     : path.resolve(rootDir, './esm-project.config.js');
 
-  const commandPrefx = buildOptions.commandPrefx || '[build-esm-project]';
-  const sourcemap = buildOptions.sourcemap;
-  const disableComplieStyles = buildOptions.disableComplieStyles;
-  const disableClean = buildOptions.disableClean;
 
   return {
+    ...restOptions,
     buildOptions,
     rootDir,
     distDir,
     srcDir,
+    styleSrcDir,
+    styleDistDir,
     jsMask,
     cssMask,
     scssMask,
@@ -60,7 +84,6 @@ function parseOptions(options = process.env.options || []) {
     aliasConfigFile,
     esmConfigFile,
     commandPrefx,
-    sourcemap,
     disableComplieStyles,
     disableClean,
   };

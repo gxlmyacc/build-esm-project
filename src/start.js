@@ -38,6 +38,8 @@ function start(execCommand, options = {}) {
       .option('--ignore <path>', 'provide igonre transfrom files')
       .option('--src <path>', 'source directory, default is src')
       .option('--out <path>', 'output directory, default is esm')
+      .option('--style-src <path>', 'style source directory, default is src')
+      .option('--style-out <path>', 'style output directory, default is esm')
       .option('-ts, --typescript, ', 'is typescript project')
       .option('--disable-complie-styles', 'whether disable complie styles')
       .option('--disable-clean', 'whether disable clean dist files')

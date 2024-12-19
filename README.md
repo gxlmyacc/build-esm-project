@@ -28,6 +28,10 @@ support "build"、"start" command
 ##   --ignore <path>          provide igonre transfrom files
 ##   --src <path>             source directory, default is src
 ##   --out <path>             output directory, default is esm
+##   --style-src <path>       style source directory, default is equals "src"
+##   --style-out <path>       style output directory, default is equals "out"
+##   --disable-complie-styles whether disable complie styles
+##   --disable-clean          whether disable clean dist files
 ##    -ts, --typescript,      is typescript project
 ##    --sourcemap             generate scripts`s sourcemap
 
@@ -45,8 +49,13 @@ esm-project build
 ##   --ignore <path>          provide igonre transfrom files
 ##   --src <path>             source directory, default is src
 ##   --out <path>             output directory, default is esm
+##   --style-src <path>       style source directory, default is equals "src"
+##   --style-out <path>       style output directory, default is equals "out"
+##   --disable-complie-styles whether disable complie styles
+##   --disable-clean          whether disable clean dist files
 ##    -ts, --typescript,      is typescript project
 ##    --sourcemap             generate scripts`s sourcemap
+
 
 esm-project start
 ```
